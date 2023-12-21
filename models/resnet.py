@@ -16,11 +16,8 @@ import col_group as cg
 class BasicBlock(nn.Module):
     expansion = 1
 
-    def __init__(self, in_planes, planes, stride=1, group=False):
+    def __init__(self, in_planes, planes, conv, bn, stride=1):
         super(BasicBlock, self).__init__()
-
-        conv = nn.Conv2d if not group else cg.GroupConv
-        bn = nn.BatchNorm2d if not group else cg.GroupBatchNorm2d
 
         self.conv1 = conv(
             in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
@@ -77,31 +74,35 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=10, group=False):
+    def __init__(self, block, num_blocks, num_classes=10, group=False, n_groups=1):
         super(ResNet, self).__init__()
         self.in_planes = 64
         self.group = group
 
-        conv = nn.Conv2d if not group else cg.GroupConv
-        bn = nn.BatchNorm2d if not group else cg.GroupBatchNorm2d
+        def groupconv(*args, **kwargs):
+            return cg.GroupConv(*args, **kwargs, n_groups=n_groups)
+        conv = nn.Conv2d if not group else groupconv
+        def groupbn(*args, **kwargs):
+            return cg.GroupBatchNorm2d(*args, **kwargs, n_groups=n_groups)
+        bn = nn.BatchNorm2d if not group else groupbn
 
         self.conv1 = conv(3, 64, kernel_size=3,
                                stride=1, padding=1, bias=False)
         self.bn1 = bn(64)
-        self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1, group=group)
-        self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2, group=group)
-        self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2, group=group)
-        self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2, group=group)
+        self.layer1 = self._make_layer(block, 64, num_blocks[0], conv=conv, bn=bn, stride=1)
+        self.layer2 = self._make_layer(block, 128, num_blocks[1], conv=conv, bn=bn, stride=2)
+        self.layer3 = self._make_layer(block, 256, num_blocks[2], conv=conv, bn=bn, stride=2)
+        self.layer4 = self._make_layer(block, 512, num_blocks[3], conv=conv, bn=bn, stride=2)
 
-        self.group_pool = None if not group else cg.GroupPool(4)
+        self.group_pool = None if not group else cg.GroupPool(n_groups)
 
         self.linear = nn.Linear(512*block.expansion, num_classes)
 
-    def _make_layer(self, block, planes, num_blocks, stride, group):
+    def _make_layer(self, block, planes, num_blocks, conv, bn, stride):
         strides = [stride] + [1]*(num_blocks-1)
         layers = []
         for stride in strides:
-            layers.append(block(self.in_planes, planes, stride, group=group))
+            layers.append(block(self.in_planes, planes, conv=conv, bn=bn, stride=stride))
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
 

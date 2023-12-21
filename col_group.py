@@ -120,9 +120,65 @@ class LiftingLayer(nn.Module):
         return y
 
 
-
-
 class GroupConv(nn.Module):
+    """
+    Group Convolution Layer
+    -----------------------
+    This layer is a group convolution layer. Its role is to perform a convolution on the input tensor in the group space.
+    """
+
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        kernel_size,
+        stride=1,
+        padding=0,
+        n_groups=4,
+        bias = False,
+        ) -> None:
+        super().__init__()
+
+
+        self.n_groups = n_groups
+        self.kernel_size = kernel_size
+        if type(self.kernel_size) != int:
+            self.kernel_size = self.kernel_size[0]
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+
+        self.stride = stride
+        self.padding = padding
+        self.bias = bias
+
+        self.conv_layer = nn.Conv2d(
+            self.n_groups * self.in_channels,
+            self.out_channels,
+            self.kernel_size,
+            stride=self.stride,
+            padding=self.padding,
+            bias=bias,
+        )
+    
+    def forward(self, x):
+        """
+        incoming tensor is of shape (batch_size, n_groups * in_channels, height, width)
+        outgoing tensor should be of shape (batch_size, n_groups * out_channels, height, width)
+        """
+        out_tensors = []
+        for i in range(self.n_groups):
+            out_tensors.append(self.conv_layer(x))
+            x = x.view(-1, self.n_groups, self.in_channels, x.shape[-2], x.shape[-1])
+            x = x.roll(-1, dims=1)
+            x = x.view(-1, self.n_groups * self.in_channels, x.shape[-2], x.shape[-1])
+
+        out_tensors = torch.stack(out_tensors, dim=1)
+        out_tensors = out_tensors.view(-1, self.n_groups * self.out_channels, out_tensors.shape[-2], out_tensors.shape[-1])
+
+        return out_tensors
+
+
+class LegacyGroupConv(nn.Module):
     """
     Group Convolution Layer
     -----------------------
@@ -414,3 +470,8 @@ def verbose_print(x, verbose, name):
     if verbose:
         print(name, x.shape)
     return x
+
+if __name__=="__main__":
+    test_input = torch.randn(1, 4*3, 32, 32)
+    group_conv = GroupConv(3, 8, 3, n_groups=4)
+    group_conv(test_input)
