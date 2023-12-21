@@ -98,6 +98,7 @@ def train(epoch):
     train_loss = 0
     correct = 0
     total = 0
+    ctr = 0
     for batch_idx, (inputs, targets) in enumerate(trainloader):
         inputs, targets = inputs.to(device), targets.to(device)
         optimizer.zero_grad()
@@ -112,7 +113,10 @@ def train(epoch):
         correct += predicted.eq(targets).sum().item()
 
         # progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                    #  % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
+        #              % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
+        # if ctr == 20:
+        #     break
+        # ctr+=1
     print(f"Train Accuracy: {100.*correct/total}")
 
 
