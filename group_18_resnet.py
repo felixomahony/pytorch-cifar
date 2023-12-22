@@ -33,14 +33,14 @@ transform_train = transforms.Compose([
     transforms.RandomCrop(32, padding=4),
     transforms.RandomHorizontalFlip(),
     # transforms.ToTensor(),
-    HueSeparation(1),
+    HueSeparation(4),
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     TensorReshape(),
 ])
 
 transform_test = transforms.Compose([
     # transforms.ToTensor(),
-    HueSeparation(1),
+    HueSeparation(4),
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     TensorReshape(),
 ])
@@ -61,7 +61,7 @@ classes = ('plane', 'car', 'bird', 'cat', 'deer',
 # Model
 print('==> Building model..')
 # net = VGG('VGG19')
-net = ResNet18(group=True)
+net = ResNet18(group=True, n_groups=4)
 # net = PreActResNet18()
 # net = GoogLeNet()
 # net = DenseNet121()

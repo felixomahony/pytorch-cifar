@@ -12,6 +12,8 @@ import torch.nn.functional as F
 
 import col_group as cg
 
+import math
+
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -86,17 +88,21 @@ class ResNet(nn.Module):
             return cg.GroupBatchNorm2d(*args, **kwargs, n_groups=n_groups)
         bn = nn.BatchNorm2d if not group else groupbn
 
-        self.conv1 = conv(3, 64, kernel_size=3,
+        shapes = [64, 128, 256, 512]
+        if group:
+            shapes = [int(s/math.sqrt(n_groups)) for s in shapes]
+            self.in_planes = int(self.in_planes/math.sqrt(n_groups))
+        self.conv1 = conv(3, shapes[0], kernel_size=3,
                                stride=1, padding=1, bias=False)
-        self.bn1 = bn(64)
-        self.layer1 = self._make_layer(block, 64, num_blocks[0], conv=conv, bn=bn, stride=1)
-        self.layer2 = self._make_layer(block, 128, num_blocks[1], conv=conv, bn=bn, stride=2)
-        self.layer3 = self._make_layer(block, 256, num_blocks[2], conv=conv, bn=bn, stride=2)
-        self.layer4 = self._make_layer(block, 512, num_blocks[3], conv=conv, bn=bn, stride=2)
+        self.bn1 = bn(shapes[0])
+        self.layer1 = self._make_layer(block, shapes[0], num_blocks[0], conv=conv, bn=bn, stride=1)
+        self.layer2 = self._make_layer(block, shapes[1], num_blocks[1], conv=conv, bn=bn, stride=2)
+        self.layer3 = self._make_layer(block, shapes[2], num_blocks[2], conv=conv, bn=bn, stride=2)
+        self.layer4 = self._make_layer(block, shapes[3], num_blocks[3], conv=conv, bn=bn, stride=2)
 
         self.group_pool = None if not group else cg.GroupPool(n_groups)
 
-        self.linear = nn.Linear(512*block.expansion, num_classes)
+        self.linear = nn.Linear(shapes[3]*block.expansion, num_classes)
 
     def _make_layer(self, block, planes, num_blocks, conv, bn, stride):
         strides = [stride] + [1]*(num_blocks-1)
@@ -120,8 +126,8 @@ class ResNet(nn.Module):
         return out
 
 
-def ResNet18(group=False):
-    return ResNet(BasicBlock, [2, 2, 2, 2], group=group)
+def ResNet18(group=False, n_groups=1):
+    return ResNet(BasicBlock, [2, 2, 2, 2], group=group, n_groups=n_groups)
 
 
 def ResNet34():
