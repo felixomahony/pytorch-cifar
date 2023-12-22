@@ -76,33 +76,31 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=10, group=False, n_groups=1):
+    def __init__(self, block, num_blocks, num_classes=10, n_groups=1, shapes = [64, 128, 256, 512]):
         super(ResNet, self).__init__()
-        self.in_planes = 64
-        self.group = group
+        self.in_planes = shapes[0]
+        self.in_planes = int(self.in_planes/math.sqrt(n_groups))
 
         def groupconv(*args, **kwargs):
             return cg.GroupConv(*args, **kwargs, n_groups=n_groups)
-        conv = nn.Conv2d if not group else groupconv
+        conv = groupconv
         def groupbn(*args, **kwargs):
             return cg.GroupBatchNorm2d(*args, **kwargs, n_groups=n_groups)
-        bn = nn.BatchNorm2d if not group else groupbn
+        bn = groupbn
 
-        shapes = [64, 128, 256, 512]
-        if group:
-            shapes = [int(s/math.sqrt(n_groups)) if i != (len(shapes)-1) else s for i, s in enumerate(shapes)]
-            self.in_planes = int(self.in_planes/math.sqrt(n_groups))
+        shapes = [int(s/math.sqrt(n_groups)) if i != (len(shapes)) else s for i, s in enumerate(shapes)]
         self.conv1 = conv(3, shapes[0], kernel_size=3,
                                stride=1, padding=1, bias=False)
         self.bn1 = bn(shapes[0])
-        self.layer1 = self._make_layer(block, shapes[0], num_blocks[0], conv=conv, bn=bn, stride=1)
-        self.layer2 = self._make_layer(block, shapes[1], num_blocks[1], conv=conv, bn=bn, stride=2)
-        self.layer3 = self._make_layer(block, shapes[2], num_blocks[2], conv=conv, bn=bn, stride=2)
-        self.layer4 = self._make_layer(block, shapes[3], num_blocks[3], conv=conv, bn=bn, stride=2)
+        self.layers = [
+            self._make_layer(block, shape, num_block, conv=conv, bn=bn, stride=1 if i == 0 else 2)
+            for i, shape, num_block in zip(range(len(shapes)), shapes, num_blocks)
+        ]
+        self.layers = nn.Sequential(*self.layers)
 
-        self.group_pool = None if not group else cg.GroupPool(n_groups)
+        self.group_pool = cg.GroupPool(n_groups)
 
-        self.linear = nn.Linear(shapes[3]*block.expansion, num_classes)
+        self.linear = nn.Linear(shapes[-1]*block.expansion, num_classes)
 
     def _make_layer(self, block, planes, num_blocks, conv, bn, stride):
         strides = [stride] + [1]*(num_blocks-1)
@@ -114,36 +112,36 @@ class ResNet(nn.Module):
 
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
-        out = self.layer1(out)
-        out = self.layer2(out)
-        out = self.layer3(out)
-        out = self.layer4(out)
-        out = F.avg_pool2d(out, 4)
-        if self.group:
-            out = self.group_pool(out)
+        out = self.layers(out)
+        out = F.avg_pool2d(out, out.shape[-1])
+        out = self.group_pool(out)
         out = out.view(out.size(0), -1)
         out = self.linear(out)
         return out
 
 
-def ResNet18(group=False, n_groups=1):
-    return ResNet(BasicBlock, [2, 2, 2, 2], group=group, n_groups=n_groups)
+def ResNet18(**kwargs):
+    return ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
 
 
-def ResNet34():
-    return ResNet(BasicBlock, [3, 4, 6, 3])
+def ResNet34(**kwargs):
+    return ResNet(BasicBlock, [3, 4, 6, 3], **kwargs)
 
 
-def ResNet50():
-    return ResNet(Bottleneck, [3, 4, 6, 3])
+def ResNet44(**kwargs):
+    return ResNet(BasicBlock, [7, 7, 7], shapes=[32, 64, 128], **kwargs)
 
 
-def ResNet101():
-    return ResNet(Bottleneck, [3, 4, 23, 3])
+def ResNet50(**kwargs):
+    return ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
 
 
-def ResNet152():
-    return ResNet(Bottleneck, [3, 8, 36, 3])
+def ResNet101(**kwargs):
+    return ResNet(Bottleneck, [3, 4, 23, 3], **kwargs)
+
+
+def ResNet152(**kwargs):
+    return ResNet(Bottleneck, [3, 8, 36, 3], **kwargs)
 
 
 def test():
