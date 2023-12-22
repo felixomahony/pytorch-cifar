@@ -95,7 +95,7 @@ def train(epoch):
 
 def test(epoch):
     global best_acc
-    net.eval()
+    # net.eval()
     test_loss = 0
     correct = 0
     total = 0
