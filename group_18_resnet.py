@@ -8,8 +8,6 @@ import torch.backends.cudnn as cudnn
 import torchvision
 import torchvision.transforms as transforms
 
-from vision_transforms import HueSeparation, TensorReshape, RandomColor
-
 import os
 import argparse
 
@@ -114,7 +112,7 @@ def train(epoch):
 
         # progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
         #              % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
-        # if ctr == 20:
+        # if ctr == 100:
         #     break
         # ctr+=1
     print(f"Train Accuracy: {100.*correct/total}")
@@ -122,7 +120,7 @@ def train(epoch):
 
 def test(epoch):
     global best_acc
-    net.eval()
+    # net.eval()
     test_loss = 0
     correct = 0
     total = 0
