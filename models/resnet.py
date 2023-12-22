@@ -90,7 +90,7 @@ class ResNet(nn.Module):
 
         shapes = [64, 128, 256, 512]
         if group:
-            shapes = [int(s/math.sqrt(n_groups)) for s in shapes]
+            shapes = [int(s/math.sqrt(n_groups)) if i != (len(shapes)-1) else s for i, s in enumerate(shapes)]
             self.in_planes = int(self.in_planes/math.sqrt(n_groups))
         self.conv1 = conv(3, shapes[0], kernel_size=3,
                                stride=1, padding=1, bias=False)
