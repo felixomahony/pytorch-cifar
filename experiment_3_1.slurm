@@ -15,4 +15,4 @@ module purge
 module load anaconda3/2022.10
 conda activate torch-env
 
-python solo_44_resnet.py
+python resnet_44_solo.py
