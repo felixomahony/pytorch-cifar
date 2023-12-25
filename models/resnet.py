@@ -88,7 +88,7 @@ class ResNet(nn.Module):
             return cg.GroupBatchNorm2d(*args, **kwargs, n_groups=n_groups)
         bn = groupbn
 
-        shapes = [int(s/math.sqrt(n_groups)) if i != (len(shapes)) else s for i, s in enumerate(shapes)]
+        shapes = [int(s/math.sqrt(n_groups)) for _, s in enumerate(shapes)]
         self.conv1 = conv(3, shapes[0], kernel_size=3,
                                stride=1, padding=1, bias=False)
         self.bn1 = bn(shapes[0])

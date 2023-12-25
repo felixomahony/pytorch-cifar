@@ -7,6 +7,8 @@ import torch.backends.cudnn as cudnn
 
 import torchvision
 import torchvision.transforms as transforms
+from torch.optim.lr_scheduler import MultiStepLR
+
 
 from vision_transforms import HueSeparation, TensorReshape
 
@@ -33,14 +35,14 @@ transform_train = transforms.Compose([
     transforms.RandomCrop(32, padding=4),
     transforms.RandomHorizontalFlip(),
     # transforms.ToTensor(),
-    HueSeparation(1),
+    HueSeparation(4),
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     TensorReshape(),
 ])
 
 transform_test = transforms.Compose([
     # transforms.ToTensor(),
-    HueSeparation(1),
+    HueSeparation(4),
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     TensorReshape(),
 ])
@@ -53,7 +55,7 @@ trainloader = torch.utils.data.DataLoader(
 testset = torchvision.datasets.CIFAR10(
     root='./data', train=False, download=True, transform=transform_test)
 testloader = torch.utils.data.DataLoader(
-    testset, batch_size=100, shuffle=False, num_workers=1)
+    testset, batch_size=128, shuffle=False, num_workers=1)
 
 classes = ('plane', 'car', 'bird', 'cat', 'deer',
            'dog', 'frog', 'horse', 'ship', 'truck')
@@ -62,7 +64,7 @@ classes = ('plane', 'car', 'bird', 'cat', 'deer',
 print('==> Building model..')
 # net = VGG('VGG19')
 # net = ResNet18(group=True, n_groups=4)
-net = ResNet44(n_groups=1)
+net = ResNet44(n_groups=4)
 n_params = sum(p.numel() for p in net.parameters() if p.requires_grad)
 print(f"Number of parameters: {n_params}")
 # net = PreActResNet18()
@@ -93,10 +95,13 @@ if args.resume:
     start_epoch = checkpoint['epoch']
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=args.lr,
-                      momentum=0.9, weight_decay=5e-4)
-scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
+optimizer = optim.SGD(net.parameters(), lr=0.05,
+                      momentum=0.9)
+# scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
+milestones = [50, 100, 150]  # epochs at which to reduce the learning rate
+gamma = 0.1  # factor by which to reduce the learning rate
 
+scheduler = MultiStepLR(optimizer, milestones=milestones, gamma=gamma)
 
 # Training
 def train(epoch):
@@ -163,7 +168,7 @@ def test(epoch):
         best_acc = acc
 
 if __name__ == '__main__':
-    for epoch in range(start_epoch, start_epoch+200):
+    for epoch in range(start_epoch, start_epoch+300):
         train(epoch)
         test(epoch)
         scheduler.step()
