@@ -94,13 +94,12 @@ if args.resume:
     start_epoch = checkpoint['epoch']
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=0.05,
-                      momentum=0.9)
-# scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
+optimizer = optim.SGD(net.parameters(), lr=args.lr,
+                      momentum=0.9, weight_decay=5e-4)
 milestones = [50, 100, 150]  # epochs at which to reduce the learning rate
 gamma = 0.1  # factor by which to reduce the learning rate
 
-scheduler = MultiStepLR(optimizer, milestones=milestones, gamma=gamma)
+scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=300)
 
 
 # Training
