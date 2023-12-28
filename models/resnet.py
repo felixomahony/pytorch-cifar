@@ -102,6 +102,8 @@ class ResNet(nn.Module):
 
         self.linear = nn.Linear(shapes[-1]*block.expansion, num_classes)
 
+        self.softmax = nn.Softmax(dim=1)
+
     def _make_layer(self, block, planes, num_blocks, conv, bn, stride):
         strides = [stride] + [1]*(num_blocks-1)
         layers = []
@@ -117,6 +119,8 @@ class ResNet(nn.Module):
         out = self.group_pool(out)
         out = out.view(out.size(0), -1)
         out = self.linear(out)
+        out = self.softmax(out)
+
         return out
 
 
