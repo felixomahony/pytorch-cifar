@@ -119,7 +119,7 @@ class ResNet(nn.Module):
         out = self.group_pool(out)
         out = out.view(out.size(0), -1)
         out = self.linear(out)
-        out = self.softmax(out)
+        # out = self.softmax(out)
 
         return out
 
