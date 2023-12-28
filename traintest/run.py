@@ -105,12 +105,12 @@ def run(trainloader, testloader, nt, n_groups):
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=300)
 
     for epoch in range(start_epoch, start_epoch+300):
-        train(epoch, net, trainloader, optimizer, criterion, device=device)
+        # train(epoch, net, trainloader, optimizer, criterion, device=device)
         # check if testloader is an array
         if isinstance(testloader, list):
-            for i, test in enumerate(testloader):
+            for i, tl in enumerate(testloader):
                 print(f"Testloader {i}")
-                test(epoch, net, test, criterion, device=device)
+                test(epoch, net, tl, criterion, device=device)
         else:
             test(epoch, net, testloader, criterion, device=device)
         scheduler.step()
