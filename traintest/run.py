@@ -80,7 +80,7 @@ def test(epoch, net, testloader, criterion, device):
         torch.save(state, './checkpoint/ckpt.pth')
         best_acc = acc
 
-def run(trainloader, testloader, nt, n_groups):
+def run(trainloader, testloader, nt, n_groups, num_classes=10):
 
     print("Groups: ", n_groups)
     print("Model Name: ", nt)
@@ -91,7 +91,7 @@ def run(trainloader, testloader, nt, n_groups):
     # Model
     print('==> Building model..')
     # if nt == "resnet44":
-    net = ResNet44(n_groups=n_groups)
+    net = ResNet44(n_groups=n_groups, num_classes=num_classes)
     n_params = sum(p.numel() for p in net.parameters() if p.requires_grad)
     print(f"Number of parameters: {n_params}")
     net = net.to(device)
@@ -105,7 +105,7 @@ def run(trainloader, testloader, nt, n_groups):
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=300)
 
     for epoch in range(start_epoch, start_epoch+300):
-        # train(epoch, net, trainloader, optimizer, criterion, device=device)
+        train(epoch, net, trainloader, optimizer, criterion, device=device)
         # check if testloader is an array
         if isinstance(testloader, list):
             for i, tl in enumerate(testloader):

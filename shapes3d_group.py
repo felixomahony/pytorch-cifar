@@ -8,9 +8,12 @@ import numpy as np
 
 
 N_GROUPS = 4
+N_CLASSES = 4
 N_IMAGES = 60_000
 TRAIN_TEST_SPLIT = 0.8
 data_path = "./data/3dshapes.h5"
+
+print("3D Shapes")
 
 # Define data transformations
 transform_train = transforms.Compose(
@@ -87,4 +90,4 @@ testloader_3 = torch.utils.data.DataLoader(
 )
 
 if __name__ == "__main__":
-    run.run(trainloader, [testloader, testloader_2, testloader_3], "resnet44", N_GROUPS)
+    run.run(trainloader, [testloader, testloader_2, testloader_3], "resnet44", N_GROUPS, N_CLASSES)

@@ -5,10 +5,13 @@ from dataset_classes.datasets import DSpritesDataset
 from traintest import run
 import torch
 
+print("DSprites")
+
 
 DATA_PATH = "./data/dsprites.npz"
 
 N_GROUPS = 1
+N_CLASSES = 3
 
 NUM_IMGS = 60_000
 
@@ -39,7 +42,7 @@ transform_test = transforms.Compose(
         RandomScaling("rg"),
         # transforms.Resize(224),
         HueSeparation(N_GROUPS),
-        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+        transforms.Normalize(mean=[0, 0, 0], std=[0.5, 0.5, 0.5]),
         TensorReshape(),
     ]
 )
@@ -50,7 +53,7 @@ transform_test_col_rotate = transforms.Compose(
         RandomScaling("blues"),
         # transforms.Resize(224),
         HueSeparation(N_GROUPS),
-        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+        transforms.Normalize(mean=[0, 0, 0], std=[0.5, 0.5, 0.5]),
         TensorReshape(),
     ]
 )
@@ -91,4 +94,4 @@ testloader_col_rotate = torch.utils.data.DataLoader(
     testset_col_rotate, batch_size=128, shuffle=False, num_workers=1)
 
 if __name__=="__main__":
-    run.run(trainloader, [testloader, testloader_col_rotate], "resnet44", N_GROUPS)
+    run.run(trainloader, [testloader, testloader_col_rotate], "resnet44", N_GROUPS, N_CLASSES)
