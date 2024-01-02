@@ -94,4 +94,4 @@ testloader_col_rotate = torch.utils.data.DataLoader(
     testset_col_rotate, batch_size=128, shuffle=False, num_workers=1)
 
 if __name__=="__main__":
-    run.run(trainloader, [testloader, testloader_col_rotate], "resnet44", N_GROUPS, N_CLASSES)
+    run.run(trainloader, [testloader, testloader_col_rotate], "resnet18", N_GROUPS, N_CLASSES)

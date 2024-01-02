@@ -90,8 +90,14 @@ def run(trainloader, testloader, nt, n_groups, num_classes=10):
 
     # Model
     print('==> Building model..')
-    # if nt == "resnet44":
-    net = ResNet44(n_groups=n_groups, num_classes=num_classes)
+    if nt == "resnet44":
+        print("Using ResNet44")
+        net = ResNet44(n_groups=n_groups, num_classes=num_classes)
+    elif nt == "resnet18":
+        print("Using ResNet18")
+        net = ResNet18(n_groups=n_groups, num_classes=num_classes)
+    else:
+        raise NotImplementedError(f"Model {nt} not implemented")
     n_params = sum(p.numel() for p in net.parameters() if p.requires_grad)
     print(f"Number of parameters: {n_params}")
     net = net.to(device)

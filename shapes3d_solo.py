@@ -90,4 +90,4 @@ testloader_3 = torch.utils.data.DataLoader(
 )
 
 if __name__ == "__main__":
-    run.run(trainloader, [testloader, testloader_2, testloader_3], "resnet44", N_GROUPS, N_CLASSES)
+    run.run(trainloader, [testloader, testloader_2, testloader_3], "resnet18", N_GROUPS, N_CLASSES)
