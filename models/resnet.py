@@ -76,19 +76,21 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=10, n_groups=1, shapes = [64, 128, 256, 512]):
+    def __init__(self, block, num_blocks, num_classes=10, n_groups=1, shapes = [64, 128, 256, 512], luminance = False, n_groups_luminance = 1):
         super(ResNet, self).__init__()
         self.in_planes = shapes[0]
-        self.in_planes = int(self.in_planes/math.sqrt(n_groups))
+        self.in_planes = int(self.in_planes/math.sqrt(n_groups * n_groups_luminance))
 
         def groupconv(*args, **kwargs):
             return cg.GroupConv(*args, **kwargs, n_groups=n_groups)
-        conv = groupconv
+        def groupconvluminance(*args, **kwargs):
+            return cg.GroupConvHL(*args, **kwargs, n_groups=n_groups, n_groups_luminance = n_groups_luminance)
+        conv = groupconvluminance if luminance else groupconv
         def groupbn(*args, **kwargs):
-            return cg.GroupBatchNorm2d(*args, **kwargs, n_groups=n_groups)
+            return cg.GroupBatchNorm2d(*args, **kwargs, n_groups=n_groups, n_groups_luminance=n_groups_luminance)
         bn = groupbn
+        shapes = [int(s/math.sqrt(n_groups * n_groups_luminance)) for _, s in enumerate(shapes)]
 
-        shapes = [int(s/math.sqrt(n_groups)) for _, s in enumerate(shapes)]
         self.conv1 = conv(3, shapes[0], kernel_size=3,
                                stride=1, padding=1, bias=False)
         self.bn1 = bn(shapes[0])
@@ -98,7 +100,7 @@ class ResNet(nn.Module):
         ]
         self.layers = nn.Sequential(*self.layers)
 
-        self.group_pool = cg.GroupPool(n_groups)
+        self.group_pool = cg.GroupPool(n_groups * n_groups_luminance)
 
         self.linear = nn.Linear(shapes[-1]*block.expansion, num_classes)
 

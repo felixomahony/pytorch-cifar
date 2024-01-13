@@ -74,6 +74,38 @@ class HueSeparation:
         return x_stacked
 
 
+class HueLuminanceSeparation:
+    def __init__(self, n_groups, n_groups_luminance, rgb=True):
+        self.n_groups = n_groups
+        self.n_groups_luminance = n_groups_luminance
+        self.rgb = rgb
+
+    def __call__(self, img):
+        img_hsv = img.convert("HSV")
+        x_transformed = [
+            torch.tensor(
+                np.array(
+                    utils.scale_luminance(
+                    utils.rotate_hue(img_hsv, ((i // self.n_groups_luminance) * 256) // self.n_groups, rgb_out=False, rgb_in=False),
+                    int((((i % self.n_groups_luminance) - self.n_groups_luminance // 2) / self.n_groups_luminance) * 256), self.rgb, rgb_in=False)
+                ),
+                dtype=torch.float32,
+            ).permute(2, 0, 1)
+            / 255
+            for i in range(self.n_groups * self.n_groups_luminance)
+        ]
+
+        # x_transformed = [
+        #     utils.rotate_hue_matrix(img, np.pi * 2 * i / self.n_groups)
+        #     for i in range(self.n_groups)
+        # ]
+
+        x_stacked = torch.stack(
+            x_transformed, dim=0
+        )  # now (n_groups, 3, im_size, im_size)
+        return x_stacked
+
+
 class HueValueSeparation:
     def __init__(self, n_groups, n_groups_d2, rgb=True):
         self.n_groups = n_groups

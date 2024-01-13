@@ -80,22 +80,24 @@ def test(epoch, net, testloader, criterion, device):
         torch.save(state, './checkpoint/ckpt.pth')
         best_acc = acc
 
-def run(trainloader, testloader, nt, n_groups, num_classes=10):
+def run(trainloader, testloader, nt, n_groups, num_classes=10, luminance=False, n_groups_luminance = 1, n_epochs=300):
 
     print("Groups: ", n_groups)
+    print("Luminance: ", luminance)
+    if luminance:
+        print("Luminance Groups: ", n_groups_luminance)
     print("Model Name: ", nt)
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
 
     # Model
     print('==> Building model..')
     if nt == "resnet44":
         print("Using ResNet44")
-        net = ResNet44(n_groups=n_groups, num_classes=num_classes)
+        net = ResNet44(n_groups=n_groups, num_classes=num_classes, luminance=luminance, n_groups_luminance = n_groups_luminance)
     elif nt == "resnet18":
         print("Using ResNet18")
-        net = ResNet18(n_groups=n_groups, num_classes=num_classes)
+        net = ResNet18(n_groups=n_groups, num_classes=num_classes, luminance=luminance, n_groups_luminance = n_groups_luminance)
     else:
         raise NotImplementedError(f"Model {nt} not implemented")
     n_params = sum(p.numel() for p in net.parameters() if p.requires_grad)
@@ -108,9 +110,9 @@ def run(trainloader, testloader, nt, n_groups, num_classes=10):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.1,
                         momentum=0.9, weight_decay=5e-4)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=300)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=n_epochs)
 
-    for epoch in range(start_epoch, start_epoch+300):
+    for epoch in range(start_epoch, start_epoch+n_epochs):
         train(epoch, net, trainloader, optimizer, criterion, device=device)
         # check if testloader is an array
         if isinstance(testloader, list):

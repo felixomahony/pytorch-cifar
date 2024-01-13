@@ -1,13 +1,14 @@
 from traintest import run
 import torch
 import torchvision.transforms as transforms
-from vision_transforms import HueSeparation, TensorReshape, RandomColor
+from vision_transforms import HueSeparation, TensorReshape, RandomColor, HueLuminanceSeparation
 from dataset_classes.datasets import HDF5Dataset
 import h5py
 import numpy as np
 
 
-N_GROUPS = 1
+N_GROUPS = 4
+N_GROUPS_LUMINANCE = 3
 N_CLASSES = 4
 N_IMAGES = 60_000
 TRAIN_TEST_SPLIT = 0.8
@@ -20,8 +21,8 @@ transform_train = transforms.Compose(
     [
         # transforms.Resize(224),
         transforms.RandomHorizontalFlip(),
-        HueSeparation(N_GROUPS),
-        transforms.Normalize(mean=[0, 0, 0], std=[0.5, 0.5, 0.5]),
+        HueLuminanceSeparation(N_GROUPS, N_GROUPS_LUMINANCE),
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
         TensorReshape(),
     ]
 )
@@ -29,8 +30,8 @@ transform_train = transforms.Compose(
 transform_test = transforms.Compose(
     [
         # transforms.Resize(224),
-        HueSeparation(N_GROUPS),
-        transforms.Normalize(mean=[0, 0, 0], std=[0.5, 0.5, 0.5]),
+        HueLuminanceSeparation(N_GROUPS, N_GROUPS_LUMINANCE),
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
         TensorReshape(),
     ]
 )
@@ -90,4 +91,4 @@ testloader_3 = torch.utils.data.DataLoader(
 )
 
 if __name__ == "__main__":
-    run.run(trainloader, [testloader, testloader_2, testloader_3], "resnet18", N_GROUPS, N_CLASSES, n_epochs=100)
+    run.run(trainloader, [testloader, testloader_2, testloader_3], "resnet18", N_GROUPS, N_CLASSES, luminance=True, n_groups_luminance = N_GROUPS_LUMINANCE)

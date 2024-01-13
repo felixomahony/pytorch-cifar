@@ -54,6 +54,17 @@ def rotate_hue(im, angle, rgb_out, rgb_in=True):
     else:
         return image_hsv.convert("RGB")
 
+def scale_luminance(im, amt, rgb_out, rgb_in):
+    image_hsv = im.convert("HSV") if rgb_in else im
+    h, s, v = image_hsv.split()
+    v = v.point(lambda p: min(255, max(0, (p + amt))))
+    image_hsv = Image.merge("HSV", (h, s, v))
+
+    if not rgb_out:
+        return image_hsv
+    else:
+        return image_hsv.convert("RGB")
+
 def rotate_value(im, power):
     image_hsv = im.convert("HSV")
     h, s, v = image_hsv.split()
