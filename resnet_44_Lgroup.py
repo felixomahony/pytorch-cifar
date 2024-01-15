@@ -14,6 +14,8 @@ from traintest import run
 n_groups = 1
 n_groups_luminance=3
 
+print("CIFAR Luminance")
+
 transform_train = transforms.Compose([
     transforms.RandomCrop(32, padding=4),
     transforms.RandomHorizontalFlip(),

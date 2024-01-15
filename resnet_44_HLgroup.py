@@ -11,6 +11,8 @@ from torch.optim.lr_scheduler import MultiStepLR
 from vision_transforms import HueSeparation, TensorReshape, HueLuminanceSeparation
 from traintest import run
 
+print("CIFAR Hue Luminance")
+
 n_groups = 4
 n_groups_luminance=3
 
@@ -41,4 +43,4 @@ testloader = torch.utils.data.DataLoader(
     testset, batch_size=128, shuffle=False, num_workers=1)
 
 if __name__=="__main__":
-    run.run(trainloader, testloader, "resnet44", n_groups, luminance=True, n_groups_luminance=n_groups_luminance)
+    run.run(trainloader, testloader, "resnet44", n_groups, luminance=True, n_groups_luminance=n_groups_luminance, n_epochs=200)
