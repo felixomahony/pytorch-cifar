@@ -37,7 +37,9 @@ class BasicBlock(nn.Module):
             )
 
     def forward(self, x):
-        out = F.relu(self.bn1(self.conv1(x)))
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = F.relu(out)
         out = self.bn2(self.conv2(out))
         out += self.shortcut(x)
         out = F.relu(out)
@@ -115,14 +117,14 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        out = F.relu(self.bn1(self.conv1(x)))
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = F.relu(out)
         out = self.layers(out)
         out = F.avg_pool2d(out, out.shape[-1])
         out = self.group_pool(out)
         out = out.view(out.size(0), -1)
         out = self.linear(out)
-        # out = self.softmax(out)
-
         return out
 
 
