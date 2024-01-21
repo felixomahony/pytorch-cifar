@@ -100,33 +100,52 @@ class GroupConvHL(nn.Module):
         outgoing tensor should be of shape (batch_size, n_groups * n_groups_luminance * out_channels, height, width)
         """
         # reshape input tensor to shape appropriate for transforming according to hlgcnn
-        x = x.view(-1, self.n_groups, self.n_groups_luminance, self.in_channels, x.shape[-2], x.shape[-1])
-        out_tensors = []
-        for i in range(self.n_groups):
-            for j in range(self.n_groups_luminance):
-                roll = j - self.n_groups_luminance // 2
-                # remodel y to appropriately model x at this luminance
-                y = x.roll(roll, dims=2)
-                # set y values to zero where rolling pushes them through to other side
-                if roll  > 0:
-                    y[:, :, :roll, :, :, :] = torch.zeros_like(y[:, :, :roll, :, :, :])
-                elif roll < 0:
-                    y[:, :, roll:, :, :, :] = torch.zeros_like(y[:, :, roll:, :, :, :])
+        # x = x.view(-1, self.n_groups, self.n_groups_luminance, self.in_channels, x.shape[-2], x.shape[-1])
+        # out_tensors = []
+        # for i in range(self.n_groups):
+        #     for j in range(self.n_groups_luminance):
+        #         roll = j - self.n_groups_luminance // 2
+        #         # remodel y to appropriately model x at this luminance
+        #         y = x.roll(roll, dims=2)
+        #         # set y values to zero where rolling pushes them through to other side
+        #         if roll  > 0:
+        #             y[:, :, :roll, :, :, :] = torch.zeros_like(y[:, :, :roll, :, :, :])
+        #         elif roll < 0:
+        #             y[:, :, roll:, :, :, :] = torch.zeros_like(y[:, :, roll:, :, :, :])
                     
 
-                # Apply network
-                # first we must reshape x to our target input
-                y = y.view(-1, self.n_groups * self.n_groups_luminance * self.in_channels, x.shape[-2], x.shape[-1])
-                z = self.conv_layer(y)
-                if self.rescale_luminance:
-                    luminance_sf = (self.n_groups_luminance - abs(roll)) / self.n_groups_luminance
-                    z /= luminance_sf
-                out_tensors.append(z)
-            x = x.roll(-1, dims=1)
+        #         # Apply network
+        #         # first we must reshape x to our target input
+        #         y = y.view(-1, self.n_groups * self.n_groups_luminance * self.in_channels, x.shape[-2], x.shape[-1])
+        #         z = self.conv_layer(y)
+        #         if self.rescale_luminance:
+        #             luminance_sf = (self.n_groups_luminance - abs(roll)) / self.n_groups_luminance
+        #             z /= luminance_sf
+        #         out_tensors.append(z)
+        #     x = x.roll(-1, dims=1)
 
-        out_tensors = torch.stack(out_tensors, dim=1)
-        out_tensors = out_tensors.view(-1, self.n_groups * self.n_groups_luminance * self.out_channels, out_tensors.shape[-2], out_tensors.shape[-1])
+        # out_tensors = torch.stack(out_tensors, dim=1)
+        # out_tensors = out_tensors.view(-1, self.n_groups * self.n_groups_luminance * self.out_channels, out_tensors.shape[-2], out_tensors.shape[-1])
 
+        
+        # New method
+        conv_weights = []
+        for i in range(self.n_groups):
+            for j in range(self.n_groups_luminance):
+                roll = self.n_groups_luminance // 2 - j
+                weight_reviewed = self.conv_layer.weight.data.view(self.out_channels, self.n_groups, self.n_groups_luminance,  self.in_channels, self.conv_layer.weight.shape[-2], self.conv_layer.weight.shape[-1])
+                weight_reviewed = weight_reviewed.roll(i, dims=1)
+                weight_reviewed = weight_reviewed.roll(roll, dims=2)
+                if roll > 0:
+                    weight_reviewed[:, :, :roll, :, :, :] = torch.zeros_like(weight_reviewed[:, :, :roll, :, :, :])
+                elif roll < 0:
+                    weight_reviewed[:, :, roll:, :, :, :] = torch.zeros_like(weight_reviewed[:, :, roll:, :, :, :])
+                weight_reviewed = weight_reviewed.view(self.out_channels, self.n_groups * self.n_groups_luminance * self.in_channels, self.conv_layer.weight.shape[-2], self.conv_layer.weight.shape[-1])
+                conv_weights.append(weight_reviewed)
+        weight = torch.stack(conv_weights, dim=0)
+        weight = weight.view(self.n_groups * self.n_groups_luminance * self.out_channels, self.n_groups * self.n_groups_luminance * self.in_channels, self.conv_layer.weight.shape[-2], self.conv_layer.weight.shape[-1])
+        out_tensors = F.conv2d(x, weight, stride=self.stride, padding=self.padding)
+        
         return out_tensors
 
 

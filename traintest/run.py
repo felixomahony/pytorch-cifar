@@ -22,28 +22,48 @@ start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
 
 # Training
-def train(epoch, net, trainloader, optimizer, criterion, device):
+def train(epoch, net, trainloader, optimizer, criterion, device, n_iters_complete, n_iters):
     print('\nEpoch: %d' % epoch)
     net.train()
     train_loss = 0
     correct = 0
     total = 0
-    for batch_idx, (inputs, targets) in enumerate(trainloader):
-        inputs, targets = inputs.to(device), targets.to(device)
-        optimizer.zero_grad()
-        outputs = net(inputs)
-        loss = criterion(outputs, targets)
-        loss.backward()
-        optimizer.step()
+    if not isinstance(trainloader, list):
+        for batch_idx, (inputs, targets) in enumerate(trainloader):
+            inputs, targets = inputs.to(device), targets.to(device)
+            optimizer.zero_grad()
+            outputs = net(inputs)
+            loss = criterion(outputs, targets)
+            loss.backward()
+            optimizer.step()
 
-        train_loss += loss.item()
-        _, predicted = outputs.max(1)
-        total += targets.size(0)
-        correct += predicted.eq(targets).sum().item()
+            train_loss += loss.item()
+            _, predicted = outputs.max(1)
+            total += targets.size(0)
+            correct += predicted.eq(targets).sum().item()
+            n_iters_complete += 1
+            if n_iters is not None and n_iters_complete >= n_iters:
+                break
+    else:
+        for loader in trainloader:
+            for batch_idx, (inputs, targets) in enumerate(loader):
+                inputs, targets = inputs.to(device), targets.to(device)
+                optimizer.zero_grad()
+                outputs = net(inputs)
+                loss = criterion(outputs, targets)
+                loss.backward()
+                optimizer.step()
 
-        # progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-        #              % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
+                train_loss += loss.item()
+                _, predicted = outputs.max(1)
+                total += targets.size(0)
+                correct += predicted.eq(targets).sum().item()
+                n_iters_complete += 1
+                if n_iters is not None and n_iters_complete >= n_iters:
+                    break
+
     print(f"Train Accuracy: {100.*correct/total}")
+    return n_iters
 
 def test(epoch, net, testloader, criterion, device):
     global best_acc
@@ -80,7 +100,7 @@ def test(epoch, net, testloader, criterion, device):
         torch.save(state, './checkpoint/ckpt.pth')
         best_acc = acc
 
-def run(trainloader, testloader, nt, n_groups, num_classes=10, luminance=False, n_groups_luminance = 1, n_epochs=300):
+def run(trainloader, testloader, nt, n_groups, num_classes=10, luminance=False, n_groups_luminance = 1, n_epochs=300, n_iters=None, use_scheduler=False, lr=0.1):
 
     print("Groups: ", n_groups)
     print("Luminance: ", luminance)
@@ -108,12 +128,16 @@ def run(trainloader, testloader, nt, n_groups, num_classes=10, luminance=False, 
         cudnn.benchmark = True
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.1,
+    optimizer = optim.SGD(net.parameters(), lr=lr,
                         momentum=0.9, weight_decay=5e-4)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=n_epochs)
-
-    for epoch in range(start_epoch, start_epoch+n_epochs):
-        train(epoch, net, trainloader, optimizer, criterion, device=device)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=n_epochs) if use_scheduler else None
+    n_iters_complete = 0
+    if n_iters is None and n_epochs is not None:
+        epoch_range = range(n_epochs)
+    if n_iters is not None and n_epochs is None:
+        epoch_range = range(10000)
+    for epoch in epoch_range:
+        n_iters_complete = train(epoch, net, trainloader, optimizer, criterion, device=device, n_iters_complete=n_iters_complete, n_iters=n_iters)
         # check if testloader is an array
         if isinstance(testloader, list):
             for i, tl in enumerate(testloader):
@@ -121,4 +145,7 @@ def run(trainloader, testloader, nt, n_groups, num_classes=10, luminance=False, 
                 test(epoch, net, tl, criterion, device=device)
         else:
             test(epoch, net, testloader, criterion, device=device)
-        scheduler.step()
+        if use_scheduler:
+            scheduler.step()
+        if n_iters is not None and n_iters_complete >= n_iters:
+            break

@@ -96,9 +96,6 @@ if args.resume:
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=args.lr,
                       momentum=0.9, weight_decay=5e-4)
-milestones = [50, 100, 150]  # epochs at which to reduce the learning rate
-gamma = 0.1  # factor by which to reduce the learning rate
-
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=300)
 
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=exp-3-1       # create a short name for your job
+#SBATCH --job-name=exp-4-1-1       # create a short name for your job
 #SBATCH --nodes=1                # node count
 #SBATCH --ntasks=1               # total number of tasks across all nodes
 #SBATCH --cpus-per-task=1        # cpu-cores per task (>1 if multi-threaded tasks)
@@ -15,4 +15,4 @@ module purge
 module load anaconda3/2022.10
 conda activate torch-env
 
-python experiment_3_1.py
+python experiment_4_1_1.py

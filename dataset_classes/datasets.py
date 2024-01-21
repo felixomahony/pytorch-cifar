@@ -4,6 +4,28 @@ from torch.utils.data import Dataset
 import h5py
 
 from PIL import Image
+import parquet
+
+class SmallNorbDataset(Dataset):
+    def __init__(self, data, targets, transform=None):
+        self.data = data
+        self.targets = torch.LongTensor(targets)
+        self.transform = transform
+        self.length = len(data)
+    
+    def __getitem__(self, index):
+        x = self.data[index]
+
+        
+        if self.transform:
+            x = self.transform(x)
+        
+        y = self.targets[index]
+        
+        return x, y
+
+    def __len__(self):
+        return self.length
 
 class DSpritesDataset(Dataset):
     def __init__(self, data, targets, transform=None):
