@@ -63,7 +63,7 @@ def train(epoch, net, trainloader, optimizer, criterion, device, n_iters_complet
                     break
 
     print(f"Train Accuracy: {100.*correct/total}")
-    return n_iters
+    return n_iters_complete
 
 def test(epoch, net, testloader, criterion, device):
     global best_acc
