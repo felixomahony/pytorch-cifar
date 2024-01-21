@@ -49,23 +49,23 @@ class BasicBlock(nn.Module):
 class Bottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, in_planes, planes, stride=1):
+    def __init__(self, in_planes, planes, conv, bn, stride=1):
         super(Bottleneck, self).__init__()
-        self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(planes)
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3,
+        self.conv1 = conv(in_planes, planes, kernel_size=1, bias=False)
+        self.bn1 = bn(planes)
+        self.conv2 = conv(planes, planes, kernel_size=3,
                                stride=stride, padding=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(planes)
-        self.conv3 = nn.Conv2d(planes, self.expansion *
+        self.bn2 = bn(planes)
+        self.conv3 = conv(planes, self.expansion *
                                planes, kernel_size=1, bias=False)
-        self.bn3 = nn.BatchNorm2d(self.expansion*planes)
+        self.bn3 = bn(self.expansion*planes)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != self.expansion*planes:
             self.shortcut = nn.Sequential(
-                nn.Conv2d(in_planes, self.expansion*planes,
+                conv(in_planes, self.expansion*planes,
                           kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(self.expansion*planes)
+                bn(self.expansion*planes)
             )
 
     def forward(self, x):
@@ -158,3 +158,6 @@ def test():
     print(y.size())
 
 # test()
+if __name__ == "__main__":
+    a = ResNet44(n_groups=1, num_classes=4, luminance=True, n_groups_luminance = 3)
+    a = ResNet44(n_groups=1, num_classes=4, luminance=True, n_groups_luminance = 1)

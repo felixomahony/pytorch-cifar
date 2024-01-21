@@ -171,10 +171,10 @@ class GroupConv(nn.Module):
         )
     
     def forward(self, x):
-        """
-        incoming tensor is of shape (batch_size, n_groups * in_channels, height, width)
-        outgoing tensor should be of shape (batch_size, n_groups * out_channels, height, width)
-        """
+        # """
+        # incoming tensor is of shape (batch_size, n_groups * in_channels, height, width)
+        # outgoing tensor should be of shape (batch_size, n_groups * out_channels, height, width)
+        # """
         # # print("BLOCK")
         # # time_s = time.time()
         # out_tensors = []
@@ -201,19 +201,34 @@ class GroupConv(nn.Module):
         # out_tensors = out_tensors.view(-1, self.n_groups * self.out_channels, out_tensors.shape[-2], out_tensors.shape[-1])
         # # print("Time for view: ", time.time() - time_0)
         # # print("Total time: ", time.time() - time_s)
+
+
+
+        # New method
         conv_weights = []
-        
         for i in range(self.n_groups):
-            conv_weights.append(self.conv_layer.weight)
-            a = self.conv_layer.weight.view(self.out_channels, self.n_groups, self.in_channels, self.conv_layer.weight.shape[-2], self.conv_layer.weight.shape[-1])
-            a = a.roll(1, dims=1)
-            a = a.view(self.out_channels, self.n_groups * self.in_channels, self.conv_layer.weight.shape[-2], self.conv_layer.weight.shape[-1])
-        
+            weight_reviewed = self.conv_layer.weight.data.view(self.out_channels, self.n_groups, self.in_channels, self.conv_layer.weight.shape[-2], self.conv_layer.weight.shape[-1])
+            weight_reviewed = weight_reviewed.roll(i, dims=1)
+            weight_reviewed = weight_reviewed.view(self.out_channels, self.n_groups * self.in_channels, self.conv_layer.weight.shape[-2], self.conv_layer.weight.shape[-1])
+            conv_weights.append(weight_reviewed)
         weight = torch.stack(conv_weights, dim=0)
         weight = weight.view(self.n_groups * self.out_channels, self.n_groups * self.in_channels, self.conv_layer.weight.shape[-2], self.conv_layer.weight.shape[-1])
-        # check if stride is a list
-        stride = self.stride
-        out_tensors = F.conv2d(x, weight, stride=stride, padding=self.padding)
+        out_tensors = F.conv2d(x, weight, stride=self.stride, padding=self.padding)
+           
+
+        # conv_weights = []
+        
+        # for i in range(self.n_groups):
+        #     conv_weights.append(self.conv_layer.weight)
+        #     a = self.conv_layer.weight.view(self.out_channels, self.n_groups, self.in_channels, self.conv_layer.weight.shape[-2], self.conv_layer.weight.shape[-1])
+        #     a = a.roll(1, dims=1)
+        #     a = a.view(self.out_channels, self.n_groups * self.in_channels, self.conv_layer.weight.shape[-2], self.conv_layer.weight.shape[-1])
+        
+        # weight = torch.stack(conv_weights, dim=0)
+        # weight = weight.view(self.n_groups * self.out_channels, self.n_groups * self.in_channels, self.conv_layer.weight.shape[-2], self.conv_layer.weight.shape[-1])
+        # # check if stride is a list
+        # stride = self.stride
+        # out_tensors = F.conv2d(x, weight, stride=stride, padding=self.padding)
         return out_tensors
 
 class GroupPool(nn.Module):

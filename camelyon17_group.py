@@ -43,7 +43,6 @@ test_data = dataset.get_subset(
 )
 
 trainloader = get_train_loader("standard", test_data, batch_size=128)
-
 testloader = get_eval_loader("standard", test_data, batch_size=128)
 
 
