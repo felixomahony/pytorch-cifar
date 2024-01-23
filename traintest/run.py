@@ -29,7 +29,9 @@ def train(epoch, net, trainloader, optimizer, criterion, device, n_iters_complet
     correct = 0
     total = 0
     if not isinstance(trainloader, list):
-        for batch_idx, (inputs, targets) in enumerate(trainloader):
+        for batch_idx, network_components in enumerate(trainloader):
+            inputs = network_components[0]
+            targets = network_components[1]
             inputs, targets = inputs.to(device), targets.to(device)
             optimizer.zero_grad()
             outputs = net(inputs)
@@ -118,6 +120,8 @@ def run(trainloader, testloader, nt, n_groups, num_classes=10, luminance=False, 
     elif nt == "resnet18":
         print("Using ResNet18")
         net = ResNet18(n_groups=n_groups, num_classes=num_classes, luminance=luminance, n_groups_luminance = n_groups_luminance)
+    elif nt == "resnet50":
+        net = ResNet50(n_groups=n_groups, num_classes=num_classes, luminance=luminance, n_groups_luminance = n_groups_luminance)
     else:
         raise NotImplementedError(f"Model {nt} not implemented")
     n_params = sum(p.numel() for p in net.parameters() if p.requires_grad)

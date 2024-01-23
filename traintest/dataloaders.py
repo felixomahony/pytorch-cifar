@@ -18,6 +18,10 @@ import numpy as np
 import h5py
 import parquet
 from wilds import get_dataset
+from wilds.common.data_loaders import get_train_loader, get_eval_loader
+import pyarrow.parquet as pq
+import io
+from PIL import Image
 
 dataloaders = namedtuple("dataloaders", ["train", "test"])
 
@@ -47,35 +51,45 @@ def camelyon17(n_groups_hue = 1, n_groups_luminance = 1):
 
 
     dataset = get_dataset("camelyon17", download=False)
-    train_loader = dataset.get_subset(
+    train_set = dataset.get_subset(
             "train",
-            transform=transform_train,
-            batch_size=128,
-            shuffle=True,
-            num_workers=1,
+            transform=transform_train
         )
-    train_loader = dataset.get_subset(
+    eval_set = dataset.get_subset(
             "test",
-            transform=transform_test,
-            batch_size=128,
-            shuffle=False,
-            num_workers=1,
+            transform=transform_test
         )
-    return dataloaders(train=train_loader, test=train_loader)
+    train_loader = get_train_loader(
+        "standard",
+        train_set,
+        batch_size=128)
+    eval_loader = get_eval_loader(
+        "standard",
+        eval_set,
+        batch_size=128)
+
+    return dataloaders(train=train_loader, test=eval_loader)
 
 def smallnorb(n_groups_hue = 1, n_groups_luminance = 1, train_split = False):
     data_train = []
     labels_train = []
-    with open(DATA_PATH_SMALLNORB + DATA_NAME_SMALLNORB_TRAIN, "rb") as f:
-        for row in parquet.reader(f, columns=['image_lt', 'category', 'lighting']):
-            if not train_split:
-                data_train.append(row[0])
-                labels_train.append(row[1])
-            else:
-                if row[2] > 2:
-                    data_train.append(row[0])
-                    labels_train.append(row[1])
-
+    # with open(DATA_PATH_SMALLNORB + DATA_NAME_SMALLNORB_TRAIN, "rb") as f:
+    #     for row in parquet.reader(f):
+    #         if not train_split:
+    #             data_train.append(row[0])
+    #             labels_train.append(row[1])
+    #         else:
+    #             if row[2] > 2:
+    #                 data_train.append(row[0])
+    #                 labels_train.append(row[1])
+    table = pq.read_table(DATA_PATH_SMALLNORB + DATA_NAME_SMALLNORB_TRAIN)
+    for i in range(len(table)):
+        image = Image.open(io.BytesIO(table['image_lt'][i][0].as_py()))
+        label = table['category'][i].as_py()
+        lighting = table['lighting'][i].as_py()
+        if not train_split or lighting > 2:
+            data_train.append(image)
+            labels_train.append(label)
             
     
     data_test = []
@@ -87,22 +101,26 @@ def smallnorb(n_groups_hue = 1, n_groups_luminance = 1, train_split = False):
     data_test_highlight = []
     labels_test_highlight = []
 
-    with open(DATA_PATH_SMALLNORB + DATA_NAME_SMALLNORB_TEST, "rb") as f:
-        for row in parquet.reader(f, columns=['image_lt', 'category', 'lighting']):
-            data_test.append(row[0])
-            labels_test.append(row[1])
-            if row[2] > 2:
-                data_test_highlight.append(row[0])
-                labels_test_highlight.append(row[1])
-            else:
-                data_test_lowlight.append(row[0])
-                labels_test_lowlight.append(row[1])
+    for i in range(len(table)):
+        image = Image.open(io.BytesIO(table['image_lt'][i][0].as_py()))
+        label = table['category'][i].as_py()
+        lighting = table['lighting'][i].as_py()
+
+        data_test.append(image)
+        labels_test.append(label)
+
+        if lighting > 2:
+            data_test_highlight.append(image)
+            labels_test_highlight.append(label)
+        else:
+            data_test_lowlight.append(image)
+            labels_test_lowlight.append(label)
 
     
     transform_train = transforms.Compose(
         [
             # transforms.Resize(224),
-            HueSeparation(n_groups_hue),
+            HueSeparation(n_groups_hue) if n_groups_luminance == 1 else HueLuminanceSeparation(n_groups_hue, n_groups_luminance),
             transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
             TensorReshape(),
         ]
@@ -111,7 +129,7 @@ def smallnorb(n_groups_hue = 1, n_groups_luminance = 1, train_split = False):
     transform_test = transforms.Compose(
         [
             # transforms.Resize(224),
-            HueSeparation(n_groups_hue),
+            HueSeparation(n_groups_hue) if n_groups_luminance == 1 else HueLuminanceSeparation(n_groups_hue, n_groups_luminance),
             transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
             TensorReshape(),
         ]
