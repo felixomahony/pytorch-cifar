@@ -101,6 +101,7 @@ def smallnorb(n_groups_hue = 1, n_groups_luminance = 1, train_split = False):
     data_test_highlight = []
     labels_test_highlight = []
 
+    table = pq.read_table(DATA_PATH_SMALLNORB + DATA_NAME_SMALLNORB_TEST)
     for i in range(len(table)):
         image = Image.open(io.BytesIO(table['image_lt'][i][0].as_py()))
         label = table['category'][i].as_py()
