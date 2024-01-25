@@ -87,7 +87,7 @@ def smallnorb(n_groups_hue = 1, n_groups_luminance = 1, train_split = False):
         image = Image.open(io.BytesIO(table['image_lt'][i][0].as_py()))
         label = table['category'][i].as_py()
         lighting = table['lighting'][i].as_py()
-        if not train_split or lighting > 2:
+        if not train_split or lighting < 2 or lighting > 3:
             data_train.append(image)
             labels_train.append(label)
             
@@ -97,6 +97,9 @@ def smallnorb(n_groups_hue = 1, n_groups_luminance = 1, train_split = False):
 
     data_test_lowlight = []
     labels_test_lowlight = []
+
+    data_test_mid = []
+    labels_test_mid = []
 
     data_test_highlight = []
     labels_test_highlight = []
@@ -110,12 +113,15 @@ def smallnorb(n_groups_hue = 1, n_groups_luminance = 1, train_split = False):
         data_test.append(image)
         labels_test.append(label)
 
-        if lighting > 2:
+        if lighting > 3:
             data_test_highlight.append(image)
             labels_test_highlight.append(label)
-        else:
+        elif lighting < 2:
             data_test_lowlight.append(image)
             labels_test_lowlight.append(label)
+        else:
+            data_test_mid.append(image)
+            labels_test_mid.append(label)
 
     
     transform_train = transforms.Compose(
@@ -140,6 +146,7 @@ def smallnorb(n_groups_hue = 1, n_groups_luminance = 1, train_split = False):
     dataset_test = SmallNorbDataset(data_test, labels_test, transform=transform_test)
     dataset_test_lowlight = SmallNorbDataset(data_test_lowlight, labels_test_lowlight, transform=transform_test)
     dataset_test_highlight = SmallNorbDataset(data_test_highlight, labels_test_highlight, transform=transform_test)
+    dataset_test_mid = SmallNorbDataset(data_test_mid, labels_test_mid, transform=transform_test)
 
     trainloader = torch.utils.data.DataLoader(
         dataset_train, batch_size=128, shuffle=True, num_workers=1
@@ -153,8 +160,11 @@ def smallnorb(n_groups_hue = 1, n_groups_luminance = 1, train_split = False):
     testloader_highlight = torch.utils.data.DataLoader(
         dataset_test_highlight, batch_size=128, shuffle=False, num_workers=1
     )
+    testloader_mid = torch.utils.data.DataLoader(
+        dataset_test_mid, batch_size=128, shuffle=False, num_workers=1
+    )
 
-    return dataloaders(train=trainloader, test=[testloader, testloader_lowlight, testloader_highlight])
+    return dataloaders(train=trainloader, test=[testloader, testloader_lowlight, testloader_mid, testloader_highlight])
 
 def shapes3d(n_groups_hue = 1, train_test_split = 0.8):
     # Define data transformations
