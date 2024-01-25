@@ -19,7 +19,7 @@ print("Experiment 6_2_1")
 print("smallnorbs")
 print("lr=0.01")
 
-trainloader, testloader = dataloaders.smallnorb(n_groups, train_split=True)
+trainloader, testloader = dataloaders.smallnorb(n_groups=n_groups, n_groups_luminance=n_groups_luminance, train_split=True)
 
 if __name__=="__main__":
     run.run(

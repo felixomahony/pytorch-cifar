@@ -24,6 +24,7 @@ start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 # Training
 def train(epoch, net, trainloader, optimizer, criterion, device, n_iters_complete, n_iters):
     print('\nEpoch: %d' % epoch)
+    print("n_iters_complete: ", n_iters_complete)
     net.train()
     train_loss = 0
     correct = 0
