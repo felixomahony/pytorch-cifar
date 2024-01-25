@@ -62,11 +62,11 @@ def camelyon17(n_groups_hue = 1, n_groups_luminance = 1):
     train_loader = get_train_loader(
         "standard",
         train_set,
-        batch_size=128)
+        batch_size=32)
     eval_loader = get_eval_loader(
         "standard",
         eval_set,
-        batch_size=128)
+        batch_size=32)
 
     return dataloaders(train=train_loader, test=eval_loader)
 
