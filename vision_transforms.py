@@ -87,7 +87,7 @@ class HueLuminanceSeparation:
                 np.array(
                     utils.scale_luminance(
                     utils.rotate_hue(img_hsv, ((i // self.n_groups_luminance) * 256) // self.n_groups, rgb_out=False, rgb_in=False),
-                    int((((i % self.n_groups_luminance) - self.n_groups_luminance // 2) / self.n_groups_luminance) * 256), self.rgb, rgb_in=False)
+                    int((((i % self.n_groups_luminance) - self.n_groups_luminance // 2) / self.n_groups_luminance) * 256 / 2), self.rgb, rgb_in=False)
                 ),
                 dtype=torch.float32,
             ).permute(2, 0, 1)
@@ -105,38 +105,6 @@ class HueLuminanceSeparation:
         )  # now (n_groups, 3, im_size, im_size)
         return x_stacked
 
-
-class HueValueSeparation:
-    def __init__(self, n_groups, n_groups_d2, rgb=True):
-        self.n_groups = n_groups
-        self.n_groups_d2 = n_groups_d2
-        self.rgb = rgb
-
-    def __call__(self, img):
-        x_hue_transformed = [
-            utils.rotate_hue(img, (i * 256) // self.n_groups, rgb=self.rgb)
-            for i in range(self.n_groups)
-        ]
-        x_transformed = [
-            torch.stack([
-                torch.tensor(
-                    np.array(
-                        utils.rotate_hue(
-                            img_2, (i * 256) // self.n_groups, rgb=self.rgb
-                        )
-                    ),
-                    dtype=torch.float32,
-                ).permute(2, 0, 1)
-                / 255
-                for i in range(self.n_groups_d2)
-            ], dim=0)
-            for img_2 in x_hue_transformed
-        ]
-        x_stacked = torch.stack(
-            x_transformed, dim=0
-        ) # shape (n_groups, n_groups_d2, 3, im_size, im_size)
-
-        return x_stacked
 
 
 class TensorReshape:

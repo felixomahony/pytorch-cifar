@@ -21,7 +21,7 @@ from wilds import get_dataset
 from wilds.common.data_loaders import get_train_loader, get_eval_loader
 import pyarrow.parquet as pq
 import io
-from PIL import Image
+from PIL import Image, ImageStat
 
 dataloaders = namedtuple("dataloaders", ["train", "test"])
 
