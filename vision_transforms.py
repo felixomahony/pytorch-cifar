@@ -95,7 +95,7 @@ class HueLuminanceSeparation:
             for i in range(self.n_groups * self.n_groups_luminance)
         ]
 
-        # x_transformed = [
+        # x_transformed = [xw
         #     utils.rotate_hue_matrix(img, np.pi * 2 * i / self.n_groups)
         #     for i in range(self.n_groups)
         # ]
@@ -104,7 +104,6 @@ class HueLuminanceSeparation:
             x_transformed, dim=0
         )  # now (n_groups, 3, im_size, im_size)
         return x_stacked
-
 
 
 class TensorReshape:
