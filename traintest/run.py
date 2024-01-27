@@ -14,6 +14,8 @@ from vision_transforms import HueSeparation, TensorReshape
 import os
 import argparse
 
+import time
+
 from models import *
 # from utils import progress_bar
 
@@ -30,7 +32,9 @@ def train(epoch, net, trainloader, optimizer, criterion, device, n_iters_complet
     correct = 0
     total = 0
     if not isinstance(trainloader, list):
+        t = time.time()
         for batch_idx, network_components in enumerate(trainloader):
+            print(time.time() - t)
             inputs = network_components[0]
             targets = network_components[1]
             inputs, targets = inputs.to(device), targets.to(device)
@@ -47,6 +51,7 @@ def train(epoch, net, trainloader, optimizer, criterion, device, n_iters_complet
             n_iters_complete += 1
             if n_iters is not None and n_iters_complete >= n_iters:
                 break
+            t = time.time()
     else:
         for loader in trainloader:
             for batch_idx, (inputs, targets) in enumerate(loader):

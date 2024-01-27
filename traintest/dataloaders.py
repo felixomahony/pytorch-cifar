@@ -87,7 +87,7 @@ def smallnorb(n_groups_hue = 1, n_groups_luminance = 1, train_split = False):
         image = Image.open(io.BytesIO(table['image_lt'][i][0].as_py()))
         label = table['category'][i].as_py()
         lighting = table['lighting'][i].as_py()
-        if not train_split or lighting < 2 or lighting > 3:
+        if not train_split or (lighting > 1 and lighting < 4):
             data_train.append(image)
             labels_train.append(label)
             
