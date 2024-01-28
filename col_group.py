@@ -181,14 +181,22 @@ class GroupConv(nn.Module):
         self.padding = padding
         self.bias = bias
 
-        self.conv_layer = nn.Conv2d(
+        # self.conv_layer = nn.Conv2d(
+        #     self.n_groups * self.in_channels,
+        #     self.out_channels,
+        #     self.kernel_size,
+        #     stride=self.stride,
+        #     padding=self.padding,
+        #     bias=bias,
+        # )
+        self.conv_weight = nn.Parameter(nn.Conv2d(
             self.n_groups * self.in_channels,
             self.out_channels,
             self.kernel_size,
             stride=self.stride,
             padding=self.padding,
             bias=bias,
-        )
+        ).weight.data)
 
 
     
@@ -212,13 +220,13 @@ class GroupConv(nn.Module):
     def forward_2(self, x):
 
         # New method
-        conv_weight = torch.zeros((self.n_groups, self.out_channels, self.n_groups, self.in_channels, self.kernel_size, self.kernel_size), dtype=self.conv_layer.weight.dtype)
+        conv_weight = torch.zeros((self.n_groups, self.out_channels, self.n_groups, self.in_channels, self.kernel_size, self.kernel_size), dtype=self.conv_weight.dtype)
         # put on same device as x
         conv_weight = conv_weight.to(x.device)
         for i in range(self.n_groups):
-            conv_weight[i, :, :, :, :, :] = self.conv_layer.weight.data.view(self.out_channels, self.n_groups, self.in_channels, self.kernel_size, self.kernel_size).roll(i, dims=1)
-            conv_weight = conv_weight.view(self.n_groups * self.out_channels, self.n_groups * self.in_channels, self.kernel_size, self.kernel_size)
-            out_tensors = F.conv2d(x, conv_weight, stride=self.stride, padding=self.padding)
+            conv_weight[i, :, :, :, :, :] = self.conv_weight.view(self.out_channels, self.n_groups, self.in_channels, self.kernel_size, self.kernel_size).roll(i, dims=1)
+        conv_weight = conv_weight.view(self.n_groups * self.out_channels, self.n_groups * self.in_channels, self.kernel_size, self.kernel_size)
+        out_tensors = F.conv2d(x, conv_weight, stride=self.stride, padding=self.padding)
         
         return out_tensors
     

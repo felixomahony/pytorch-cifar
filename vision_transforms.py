@@ -86,9 +86,9 @@ class HueLuminanceSeparation:
             torch.tensor(
                 np.array(
                     utils.scale_luminance(
-                    utils.rotate_hue(img_hsv, ((i // self.n_groups_luminance) * 256) // self.n_groups, rgb_out=True, rgb_in=False),
-                    # int((((i % self.n_groups_luminance) - self.n_groups_luminance // 2) / self.n_groups_luminance) * 256 / 2), self.rgb, rgb_in=True)
-                    float(2 ** ((i % self.n_groups_luminance) - self.n_groups_luminance // 2)), self.rgb, rgb_in=True)
+                    utils.rotate_hue(img_hsv, ((i // self.n_groups_luminance) * 256) // self.n_groups, rgb_out=False, rgb_in=False),
+                    int((((i % self.n_groups_luminance) - self.n_groups_luminance // 2) / self.n_groups_luminance) * 256 / 2), self.rgb, rgb_in=True)
+                    # float(2 ** ((i % self.n_groups_luminance) - self.n_groups_luminance // 2)), self.rgb, rgb_in=False)
                 ),
                 dtype=torch.float32,
             ).permute(2, 0, 1)
