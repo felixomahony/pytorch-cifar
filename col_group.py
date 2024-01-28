@@ -217,7 +217,7 @@ class GroupConv(nn.Module):
         conv_weight = conv_weight.to(x.device)
         for i in range(self.n_groups):
             conv_weight[i, :, :, :, :, :] = self.conv_layer.weight.data.view(self.out_channels, self.n_groups, self.in_channels, self.kernel_size, self.kernel_size).roll(i, dims=1)
-            conv_weight = self.conv_weight.view(self.n_groups * self.out_channels, self.n_groups * self.in_channels, self.kernel_size, self.kernel_size)
+            conv_weight = conv_weight.view(self.n_groups * self.out_channels, self.n_groups * self.in_channels, self.kernel_size, self.kernel_size)
             out_tensors = F.conv2d(x, conv_weight, stride=self.stride, padding=self.padding)
         
         return out_tensors
