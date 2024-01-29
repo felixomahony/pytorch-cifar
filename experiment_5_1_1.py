@@ -25,7 +25,7 @@ if __name__=="__main__":
     run.run(
         trainloader=trainloader, 
         testloader=testloader, 
-        nt="resnet18", 
+        nt="resnet44", 
         n_groups=n_groups,
         num_classes=4,
         luminance=False,
