@@ -223,8 +223,12 @@ class GroupConv(nn.Module):
         conv_weight = torch.zeros((self.n_groups, self.out_channels, self.n_groups, self.in_channels, self.kernel_size, self.kernel_size), dtype=self.conv_weight.dtype)
         # put on same device as x
         conv_weight = conv_weight.to(x.device)
+        cw = self.conv_weight.view(self.out_channels, self.n_groups, self.in_channels, self.kernel_size, self.kernel_size)
         for i in range(self.n_groups):
-            conv_weight[i, :, :, :, :, :] = self.conv_weight.view(self.out_channels, self.n_groups, self.in_channels, self.kernel_size, self.kernel_size).roll(i, dims=1)
+            conv_weight[i, :, :, :, :, :] = cw.roll(i, dims=1)
+        # for i in range(self.n_groups):
+        #     for j in range(self.n_groups):
+        #         conv_weight[i, :, j, :, :, :] = cw[:, (i+j) % self.n_groups, :, :, :]
         conv_weight = conv_weight.view(self.n_groups * self.out_channels, self.n_groups * self.in_channels, self.kernel_size, self.kernel_size)
         out_tensors = F.conv2d(x, conv_weight, stride=self.stride, padding=self.padding)
         

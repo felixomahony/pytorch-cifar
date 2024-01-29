@@ -17,7 +17,7 @@ import argparse
 import time
 
 from models import *
-# from utils import progress_bar
+from utils import progress_bar
 
 best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
@@ -32,14 +32,24 @@ def train(epoch, net, trainloader, optimizer, criterion, device, n_iters_complet
     correct = 0
     total = 0
     if not isinstance(trainloader, list):
+        a = time.time()
         for batch_idx, network_components in enumerate(trainloader):
+            print(f"Time to load batch: {time.time() - a}")
+            a = time.time()
             inputs = network_components[0]
             targets = network_components[1]
+            print(f"Time to get inputs and targets: {time.time() - a}")
             inputs, targets = inputs.to(device), targets.to(device)
             optimizer.zero_grad()
+            a = time.time()
             outputs = net(inputs)
+            print(f"Time to get outputs: {time.time() - a}")
+            a = time.time()
             loss = criterion(outputs, targets)
+            print(f"Time to get loss: {time.time() - a}")
+            a = time.time()
             loss.backward()
+            print(f"Time to backprop: {time.time() - a}")
             optimizer.step()
 
             train_loss += loss.item()
@@ -49,6 +59,9 @@ def train(epoch, net, trainloader, optimizer, criterion, device, n_iters_complet
             n_iters_complete += 1
             if n_iters is not None and n_iters_complete >= n_iters:
                 break
+            progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+                         % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
+            a = time.time()
     else:
         for loader in trainloader:
             for batch_idx, (inputs, targets) in enumerate(loader):
@@ -107,6 +120,15 @@ def test(epoch, net, testloader, criterion, device):
         torch.save(state, './checkpoint/ckpt.pth')
         best_acc = acc
 
+def save_state_dict(net):
+    state_dict = net.state_dict()
+    for key in state_dict.keys():
+        state_dict[key] = state_dict[key].cpu()
+    # choose a random file name
+    filename = f"./state_dict_{time.time()}.pth"
+    torch.save(state_dict, filename)
+    print(f"Saved state dict to {filename}")
+
 def run(trainloader, testloader, nt, n_groups, num_classes=10, luminance=False, n_groups_luminance = 1, n_epochs=300, n_iters=None, use_scheduler=False, lr=0.1):
 
     print("Groups: ", n_groups)
@@ -157,4 +179,6 @@ def run(trainloader, testloader, nt, n_groups, num_classes=10, luminance=False, 
         if use_scheduler:
             scheduler.step()
         if n_iters is not None and n_iters_complete >= n_iters:
+            save_state_dict(net)
             break
+    save_state_dict(net)
