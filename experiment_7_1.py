@@ -13,9 +13,9 @@ logging.warning("starting job")
 n_groups = 1
 n_groups_luminance=1
 
-print("Experiment 7_1")
-print("camelyon")
-print("lr=0.01")
+logging.warning("Experiment 7_1")
+logging.warning("camelyon")
+logging.warning("lr=0.01")
 
 # create logger
 

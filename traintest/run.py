@@ -4,6 +4,8 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
 
+import logging
+
 import os
 
 import time
@@ -17,8 +19,8 @@ start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
 # Training
 def train(epoch, net, trainloader, optimizer, criterion, device, n_iters_complete, n_iters):
-    print('\nEpoch: %d' % epoch)
-    print("n_iters_complete: ", n_iters_complete)
+    logging.warning('\nEpoch: %d' % epoch)
+    logging.warning("n_iters_complete: ", n_iters_complete)
     net.train()
     train_loss = 0
     correct = 0
@@ -61,7 +63,7 @@ def train(epoch, net, trainloader, optimizer, criterion, device, n_iters_complet
                 if n_iters is not None and n_iters_complete >= n_iters:
                     break
 
-    print(f"Train Accuracy: {100.*correct/total}")
+    logging.warning(f"Train Accuracy: {100.*correct/total}")
     return n_iters_complete
 
 def test(epoch, net, testloader, criterion, device):
@@ -85,12 +87,12 @@ def test(epoch, net, testloader, criterion, device):
 
             # progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
             #              % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
-    print(f"Test Accuracy: {100.*correct/total}")
+    logging.warning(f"Test Accuracy: {100.*correct/total}")
 
     # Save checkpoint.
     acc = 100.*correct/total
     if acc > best_acc:
-        print('Saving..')
+        logging.warning('Saving..')
         state = {
             'net': net.state_dict(),
             'acc': acc,
@@ -108,32 +110,33 @@ def save_state_dict(net):
     # choose a random file name
     filename = f"./state_dict_{time.time()}.pth"
     torch.save(state_dict, filename)
-    print(f"Saved state dict to {filename}")
+    logging.warning(f"Saved state dict to {filename}")
 
 def run(trainloader, testloader, nt, n_groups, num_classes=10, luminance=False, n_groups_luminance = 1, n_epochs=300, n_iters=None, use_scheduler=False, lr=0.1):
 
-    print("Groups: ", n_groups)
-    print("Luminance: ", luminance)
+    logging.warning("Groups: ", n_groups)
+    logging.warning("Luminance: ", luminance)
     if luminance:
-        print("Luminance Groups: ", n_groups_luminance)
-    print("Model Name: ", nt)
+        logging.warning("Luminance Groups: ", n_groups_luminance)
+    logging.warning("Model Name: ", nt)
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     # Model
-    print('==> Building model..')
+    logging.warning('==> Building model..')
     if nt == "resnet44":
-        print("Using ResNet44")
+        logging.warning("Using ResNet44")
         net = ResNet44(n_groups=n_groups, num_classes=num_classes, luminance=luminance, n_groups_luminance = n_groups_luminance)
     elif nt == "resnet18":
-        print("Using ResNet18")
+        logging.warning("Using ResNet18")
         net = ResNet18(n_groups=n_groups, num_classes=num_classes, luminance=luminance, n_groups_luminance = n_groups_luminance)
     elif nt == "resnet50":
+        logging.warning("Using ResNet50")
         net = ResNet50(n_groups=n_groups, num_classes=num_classes, luminance=luminance, n_groups_luminance = n_groups_luminance)
     else:
         raise NotImplementedError(f"Model {nt} not implemented")
     n_params = sum(p.numel() for p in net.parameters() if p.requires_grad)
-    print(f"Number of parameters: {n_params}")
+    logging.warning(f"Number of parameters: {n_params}")
     net = net.to(device)
     if device == 'cuda':
         net = torch.nn.DataParallel(net)
@@ -153,7 +156,7 @@ def run(trainloader, testloader, nt, n_groups, num_classes=10, luminance=False, 
         # check if testloader is an array
         if isinstance(testloader, list):
             for i, tl in enumerate(testloader):
-                print(f"Testloader {i}")
+                logging.warning(f"Testloader {i}")
                 test(epoch, net, tl, criterion, device=device)
         else:
             test(epoch, net, testloader, criterion, device=device)
