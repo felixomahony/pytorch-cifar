@@ -32,24 +32,14 @@ def train(epoch, net, trainloader, optimizer, criterion, device, n_iters_complet
     correct = 0
     total = 0
     if not isinstance(trainloader, list):
-        a = time.time()
         for batch_idx, network_components in enumerate(trainloader):
-            print(f"Time to load batch: {time.time() - a}")
-            a = time.time()
             inputs = network_components[0]
             targets = network_components[1]
-            print(f"Time to get inputs and targets: {time.time() - a}")
             inputs, targets = inputs.to(device), targets.to(device)
             optimizer.zero_grad()
-            a = time.time()
             outputs = net(inputs)
-            print(f"Time to get outputs: {time.time() - a}")
-            a = time.time()
             loss = criterion(outputs, targets)
-            print(f"Time to get loss: {time.time() - a}")
-            a = time.time()
             loss.backward()
-            print(f"Time to backprop: {time.time() - a}")
             optimizer.step()
 
             train_loss += loss.item()
@@ -61,7 +51,6 @@ def train(epoch, net, trainloader, optimizer, criterion, device, n_iters_complet
                 break
             # progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
             #              % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
-            a = time.time()
     else:
         for loader in trainloader:
             for batch_idx, (inputs, targets) in enumerate(loader):
