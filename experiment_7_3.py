@@ -31,6 +31,6 @@ if __name__=="__main__":
         luminance=n_groups_luminance>1,
         n_groups_luminance=n_groups_luminance,
         n_epochs=None,
-        n_iters=800_000,
+        n_iters=400_000,
         use_scheduler=False,
         lr=0.01,)
