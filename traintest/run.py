@@ -114,11 +114,11 @@ def save_state_dict(net):
 
 def run(trainloader, testloader, nt, n_groups, num_classes=10, luminance=False, n_groups_luminance = 1, n_epochs=300, n_iters=None, use_scheduler=False, lr=0.1):
 
-    logging.warning("Groups: ", n_groups)
-    logging.warning("Luminance: ", luminance)
+    logging.warning("Groups: %d" % n_groups)
+    logging.warning("Luminance: %d" % luminance)
     if luminance:
-        logging.warning("Luminance Groups: ", n_groups_luminance)
-    logging.warning("Model Name: ", nt)
+        logging.warning("Luminance Groups: %d" % n_groups_luminance)
+    logging.warning("Model Name: %d" % nt)
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
