@@ -1,16 +1,9 @@
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-import torch.backends.cudnn as cudnn
+print("starting job")
 
-import torchvision
-import torchvision.transforms as transforms
-from torch.optim.lr_scheduler import MultiStepLR
-
-from vision_transforms import HueSeparation, TensorReshape
 from traintest import run
 from traintest import dataloaders
+
+import time
 
 n_groups = 1
 n_groups_luminance=1
@@ -18,6 +11,9 @@ n_groups_luminance=1
 print("Experiment 7_1")
 print("camelyon")
 print("lr=0.01")
+
+# pause for one second
+time.sleep(1)
 
 trainloader, testloader = dataloaders.camelyon17(n_groups, n_groups_luminance)
 
