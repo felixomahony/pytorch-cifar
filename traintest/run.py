@@ -17,7 +17,7 @@ import argparse
 import time
 
 from models import *
-from utils import progress_bar
+# from utils import progress_bar
 
 best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
@@ -59,8 +59,8 @@ def train(epoch, net, trainloader, optimizer, criterion, device, n_iters_complet
             n_iters_complete += 1
             if n_iters is not None and n_iters_complete >= n_iters:
                 break
-            progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                         % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
+            # progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+            #              % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
             a = time.time()
     else:
         for loader in trainloader:
