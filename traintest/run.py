@@ -19,8 +19,8 @@ start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
 # Training
 def train(epoch, net, trainloader, optimizer, criterion, device, n_iters_complete, n_iters):
-    logging.warning('\nEpoch: %d' % epoch)
-    logging.warning("n_iters_complete: ", n_iters_complete)
+    logging.warning('Epoch: %d' % epoch)
+    logging.warning("n_iters_complete: %d" % n_iters_complete)
     net.train()
     train_loss = 0
     correct = 0
@@ -136,7 +136,7 @@ def run(trainloader, testloader, nt, n_groups, num_classes=10, luminance=False, 
     else:
         raise NotImplementedError(f"Model {nt} not implemented")
     n_params = sum(p.numel() for p in net.parameters() if p.requires_grad)
-    logging.warning(f"Number of parameters: {n_params}")
+    logging.warning("Number of parameters: %d" % n_params)
     net = net.to(device)
     if device == 'cuda':
         net = torch.nn.DataParallel(net)
