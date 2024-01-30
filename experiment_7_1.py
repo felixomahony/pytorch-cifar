@@ -1,5 +1,4 @@
 print("starting job")
-raise Warning("This is a test")
 
 from traintest import run
 from traintest import dataloaders
@@ -7,6 +6,9 @@ from traintest import dataloaders
 import time
 
 import logging
+
+# send warning
+logging.warning("starting job")
 
 n_groups = 1
 n_groups_luminance=1
