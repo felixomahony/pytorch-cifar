@@ -1,9 +1,12 @@
 print("starting job")
+raise Warning("This is a test")
 
 from traintest import run
 from traintest import dataloaders
 
 import time
+
+import logging
 
 n_groups = 1
 n_groups_luminance=1
@@ -11,6 +14,8 @@ n_groups_luminance=1
 print("Experiment 7_1")
 print("camelyon")
 print("lr=0.01")
+
+# create logger
 
 # pause for one second
 time.sleep(1)
