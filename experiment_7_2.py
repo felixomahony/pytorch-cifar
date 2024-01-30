@@ -8,6 +8,8 @@ import torchvision
 import torchvision.transforms as transforms
 from torch.optim.lr_scheduler import MultiStepLR
 
+import logging
+
 from vision_transforms import HueSeparation, TensorReshape
 from traintest import run
 from traintest import dataloaders
@@ -15,9 +17,9 @@ from traintest import dataloaders
 n_groups = 4
 n_groups_luminance=1
 
-print("Experiment 7_2")
-print("camelyon")
-print("lr=0.01")
+logging.warning("Experiment 7_2")
+logging.warning("camelyon")
+logging.warning("lr=0.01")
 
 trainloader, testloader = dataloaders.camelyon17(n_groups, n_groups_luminance)
 
