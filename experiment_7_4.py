@@ -19,7 +19,7 @@ print("Experiment 7_4")
 print("camelyon")
 print("lr=0.01")
 
-trainloader, testloader = dataloaders.camelyon17(n_groups, n_groups_luminance)
+trainloader, testloader = dataloaders.camelyon17(n_groups, n_groups_luminance, batch_size=32)
 
 if __name__=="__main__":
     run.run(
@@ -31,6 +31,6 @@ if __name__=="__main__":
         luminance=n_groups_luminance>1,
         n_groups_luminance=n_groups_luminance,
         n_epochs=None,
-        n_iters=400_000,
+        n_iters=800_000,
         use_scheduler=False,
         lr=0.01,)

@@ -31,7 +31,7 @@ DATA_PATH_SMALLNORB = "./data/smallnorb/"
 DATA_NAME_SMALLNORB_TEST = "test-00000-of-00001-b4af1727fb5b132e.parquet"
 DATA_NAME_SMALLNORB_TRAIN = "train-00000-of-00001-ba54590c34eb8af1.parquet"
 
-def camelyon17(n_groups_hue = 1, n_groups_luminance = 1):
+def camelyon17(n_groups_hue = 1, n_groups_luminance = 1, batch_size=64):
     transform_train = transforms.Compose(
         [
             # transforms.Resize(224),
@@ -62,11 +62,11 @@ def camelyon17(n_groups_hue = 1, n_groups_luminance = 1):
     train_loader = get_train_loader(
         "standard",
         train_set,
-        batch_size=64)
+        batch_size=batch_size)
     eval_loader = get_eval_loader(
         "standard",
         eval_set,
-        batch_size=64)
+        batch_size=batch_size)
 
     return dataloaders(train=train_loader, test=eval_loader)
 
