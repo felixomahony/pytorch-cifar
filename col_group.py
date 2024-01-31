@@ -85,17 +85,25 @@ class GroupConvHL(nn.Module):
 
         self.rescale_luminance = rescale_luminance
 
-        self.conv_layer = nn.Conv2d(
+        # self.conv_layer = nn.Conv2d(
+        #     self.n_groups * self.n_groups_luminance * self.in_channels,
+        #     self.out_channels,
+        #     self.kernel_size,
+        #     stride=self.stride,
+        #     padding=self.padding,
+        #     bias=bias, # it should be noted that bias = True is untested (since only resnets are considered), and may not function as expected.
+        # )
+
+        self.conv_weight = nn.Parameter(nn.Conv2d(
             self.n_groups * self.n_groups_luminance * self.in_channels,
             self.out_channels,
             self.kernel_size,
             stride=self.stride,
             padding=self.padding,
             bias=bias, # it should be noted that bias = True is untested (since only resnets are considered), and may not function as expected.
-        )
+        ).weight.data)
         
-    
-    def forward(self, x):
+    def forward_1(self, x):
         """
         incoming tensor is of shape (batch_size, n_groups * n_groups_luminance * in_channels, height, width)
         outgoing tensor should be of shape (batch_size, n_groups * n_groups_luminance * out_channels, height, width)
@@ -127,26 +135,29 @@ class GroupConvHL(nn.Module):
 
         out_tensors = torch.stack(out_tensors, dim=1)
         out_tensors = out_tensors.view(-1, self.n_groups * self.n_groups_luminance * self.out_channels, out_tensors.shape[-2], out_tensors.shape[-1])
+        return out_tensors
+    
+    def forward_2(self, x):
+        conv_weight = torch.zeros((self.n_groups, self.n_groups_luminance, self.out_channels, self.n_groups, self.n_groups_luminance, self.in_channels, self.kernel_size, self.kernel_size), dtype=self.conv_weight.dtype)
+        # put on same device as x
+        conv_weight = conv_weight.to(x.device)
+        cw = self.conv_weight.view(self.out_channels, self.n_groups, self.n_groups_luminance, self.in_channels, self.kernel_size, self.kernel_size)
+        for i in range(self.n_groups):
+            for j in range(self.n_groups_luminance):
+                roll_luminance = j - self.n_groups_luminance // 2
+                conv_weight[i, j, :, :, :, :, :, :] = cw.roll(i, dims=1).roll(roll_luminance, dims=2)
+                conv_weight[i, j, :, :, :, :, :, :] *= (self.n_groups_luminance - abs(roll_luminance)) / self.n_groups_luminance
+                if roll_luminance > 0:
+                    conv_weight[i, j, :, :, :roll_luminance, :, :] *= 0
+                elif roll_luminance < 0:
+                    conv_weight[i, j, :, :, roll_luminance:, :, :] *= 0
+        conv_weight = conv_weight.view(self.n_groups * self.n_groups_luminance * self.out_channels, self.n_groups * self.n_groups_luminance * self.in_channels, self.kernel_size, self.kernel_size)
+        out_tensors = F.conv2d(x, conv_weight, stride=self.stride, padding=self.padding)
+        return out_tensors
+    
+    def forward(self, x):
+        out_tensors = self.forward_2(x)
 
-        
-        # New method
-        # conv_weights = []
-        # for i in range(self.n_groups):
-        #     for j in range(self.n_groups_luminance):
-        #         roll = self.n_groups_luminance // 2 - j
-        #         weight_reviewed = self.conv_layer.weight.data.view(self.out_channels, self.n_groups, self.n_groups_luminance,  self.in_channels, self.conv_layer.weight.shape[-2], self.conv_layer.weight.shape[-1])
-        #         weight_reviewed = weight_reviewed.roll(i, dims=1)
-        #         weight_reviewed = weight_reviewed.roll(roll, dims=2)
-        #         if roll > 0:
-        #             weight_reviewed[:, :, :roll, :, :, :] = torch.zeros_like(weight_reviewed[:, :, :roll, :, :, :])
-        #         elif roll < 0:
-        #             weight_reviewed[:, :, roll:, :, :, :] = torch.zeros_like(weight_reviewed[:, :, roll:, :, :, :])
-        #         weight_reviewed = weight_reviewed.view(self.out_channels, self.n_groups * self.n_groups_luminance * self.in_channels, self.conv_layer.weight.shape[-2], self.conv_layer.weight.shape[-1])
-        #         conv_weights.append(weight_reviewed)
-        # weight = torch.stack(conv_weights, dim=0)
-        # weight = weight.view(self.n_groups * self.n_groups_luminance * self.out_channels, self.n_groups * self.n_groups_luminance * self.in_channels, self.conv_layer.weight.shape[-2], self.conv_layer.weight.shape[-1])
-        # out_tensors = F.conv2d(x, weight, stride=self.stride, padding=self.padding)
-        
         return out_tensors
 
 
