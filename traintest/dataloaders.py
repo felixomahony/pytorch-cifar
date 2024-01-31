@@ -312,7 +312,7 @@ def dsprites(n_groups_hue, n_dataset_splits=5, train_test_split=0.8):
 
     return dataloaders(train=train_dataloaders, test=test_dataloaders)
 
-def cifar(n_groups_hue = 1, n_groups_luminance = 1):
+def cifar(n_groups_hue = 1, n_groups_luminance = 1, batch_size=128):
 
     transform_train = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
@@ -333,11 +333,11 @@ def cifar(n_groups_hue = 1, n_groups_luminance = 1):
     trainset = torchvision.datasets.CIFAR10(
         root='./data', train=True, download=True, transform=transform_train)
     trainloader = torch.utils.data.DataLoader(
-        trainset, batch_size=128, shuffle=True, num_workers=1)
+        trainset, batch_size=batch_size, shuffle=True, num_workers=1)
 
     testset = torchvision.datasets.CIFAR10(
         root='./data', train=False, download=True, transform=transform_test)
     testloader = torch.utils.data.DataLoader(
-        testset, batch_size=128, shuffle=False, num_workers=1)
+        testset, batch_size=batch_size, shuffle=False, num_workers=1)
     
     return dataloaders(train=trainloader, test=testloader)

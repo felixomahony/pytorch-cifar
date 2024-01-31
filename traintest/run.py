@@ -118,7 +118,7 @@ def run(trainloader, testloader, nt, n_groups, num_classes=10, luminance=False, 
     logging.warning("Luminance: %d" % luminance)
     if luminance:
         logging.warning("Luminance Groups: %d" % n_groups_luminance)
-    logging.warning("Model Name: %d" % nt)
+    logging.warning("Model Name: %s" % nt)
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
