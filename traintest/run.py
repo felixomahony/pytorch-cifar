@@ -16,12 +16,13 @@ from models import *
 best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
+# set seed
+torch.manual_seed(1234)
 
 # Training
 def train(epoch, net, trainloader, optimizer, criterion, device, n_iters_complete, n_iters):
     logging.warning('Epoch: %d' % epoch)
     logging.warning("n_iters_complete: %d" % n_iters_complete)
-    net.train()
     train_loss = 0
     correct = 0
     total = 0
@@ -68,7 +69,6 @@ def train(epoch, net, trainloader, optimizer, criterion, device, n_iters_complet
 
 def test(epoch, net, testloader, criterion, device):
     global best_acc
-    net.eval()
     test_loss = 0
     correct = 0
     total = 0
