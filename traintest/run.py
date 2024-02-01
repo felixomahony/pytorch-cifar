@@ -68,7 +68,7 @@ def train(epoch, net, trainloader, optimizer, criterion, device, n_iters_complet
 
 def test(epoch, net, testloader, criterion, device):
     global best_acc
-    # net.eval()
+    net.eval()
     test_loss = 0
     correct = 0
     total = 0
@@ -143,8 +143,10 @@ def run(trainloader, testloader, nt, n_groups, num_classes=10, luminance=False, 
         cudnn.benchmark = True
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=lr,
-                        momentum=0.9, weight_decay=5e-4)
+    # optimizer = optim.SGD(net.parameters(), lr=lr,
+    #                     momentum=0.9, weight_decay=5e-4)
+    optimizer = optim.Adam(net.parameters(), lr=lr, weight_decay=0.0001)
+
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=n_epochs) if use_scheduler else None
     n_iters_complete = 0
     if n_iters is None and n_epochs is not None:
