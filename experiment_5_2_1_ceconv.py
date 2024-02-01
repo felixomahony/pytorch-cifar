@@ -15,7 +15,7 @@ from traintest import dataloaders
 n_groups = 1
 n_groups_luminance=1
 
-print("Experiment 5_2_1")
+print("Experiment 5_2_1_ceconv")
 print("Shapes3D")
 print("lr=0.01")
 
