@@ -129,7 +129,7 @@ def run(trainloader, testloader, nt, n_groups, num_classes=10, luminance=False, 
     if nt == "resnet44":
         logging.warning("Using ResNet44")
         net = ResNet44(n_groups=n_groups, num_classes=num_classes, luminance=luminance, n_groups_luminance = n_groups_luminance)
-    if nt == "resnet44_ceconv":
+    elif nt == "resnet44_ceconv":
         logging.warning("Using ResNet44_ceconv")
         net = ResNet44_ceconv(rotations=4, num_classes=10)
     elif nt == "resnet18":

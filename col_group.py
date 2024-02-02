@@ -102,6 +102,37 @@ class GroupConvHL(nn.Module):
             padding=self.padding,
             bias=bias, # it should be noted that bias = True is untested (since only resnets are considered), and may not function as expected.
         ).weight.data)
+
+        self.construct_masks()
+
+    def construct_masks(self):
+        mask = torch.zeros((self.n_groups, self.n_groups_luminance, self.n_groups, self.n_groups_luminance, 2), dtype=torch.int8)
+        sfs = torch.ones((self.n_groups, self.n_groups_luminance), dtype=torch.float32)
+        group_elems_hue = torch.arange(self.n_groups)
+        group_elems_luminance = torch.arange(self.n_groups_luminance)
+        H, L = torch.meshgrid(group_elems_hue, group_elems_luminance)
+        group_elems = torch.stack((H, L), dim=-1)
+        for i in range(self.n_groups):
+            for j in range(self.n_groups_luminance):
+                roll_luminance = j - self.n_groups_luminance // 2
+                mask[i, j, :, :] = group_elems.roll(i, dims=0).roll(roll_luminance, dims=1)
+                if roll_luminance > 0:
+                    mask[i, j, :, :roll_luminance, :] = -1
+                elif roll_luminance < 0:
+                    mask[i, j, :, roll_luminance:, :] = -1
+                sfs[i, j] = (self.n_groups_luminance - abs(roll_luminance)) / self.n_groups_luminance
+
+        self.mask = mask
+        self.sfs = sfs
+
+        # masks = []
+        # for i in range(self.n_groups):
+        #     m = []
+        #     for j in range(self.n_groups_luminance):
+        #         m.append(mask[:, :, :, :] == torch.tensor([i, j]))
+        #     masks.append(m)
+        # self.masks = masks
+                
         
     def forward_1(self, x):
         """
@@ -146,17 +177,51 @@ class GroupConvHL(nn.Module):
             for j in range(self.n_groups_luminance):
                 roll_luminance = j - self.n_groups_luminance // 2
                 conv_weight[i, j, :, :, :, :, :, :] = cw.roll(i, dims=1).roll(roll_luminance, dims=2)
-                conv_weight[i, j, :, :, :, :, :, :] *= (self.n_groups_luminance - abs(roll_luminance)) / self.n_groups_luminance
+                conv_weight[i, j, :, :, :, :, :, :] /= (self.n_groups_luminance - abs(roll_luminance)) / self.n_groups_luminance
                 if roll_luminance > 0:
-                    conv_weight[i, j, :, :, :roll_luminance, :, :] *= 0
+                    conv_weight[i, j, :, :, :roll_luminance, :, :, :] *= 0
                 elif roll_luminance < 0:
-                    conv_weight[i, j, :, :, roll_luminance:, :, :] *= 0
+                    conv_weight[i, j, :, :, roll_luminance:, :, :, :] *= 0
+
+                # the mask has four dimensions and is boolean
+                    # we want to assign the values of conv_weight[a, b, :, c, d, :, :, :] to cw[:, i, j, :,:,:]
+                    # where mask[a, b, c, d] is True
+                # we can do this by reshaping conv_weight to have shape (n_groups * n_groups_luminance, out_channels, n_groups * n_groups_luminance, in_channels, kernel_size, kernel_size)
+                # and then reshaping cw to have shape (out_channels, n_groups * n_groups_luminance, in_channels, kernel_size, kernel_size)
+                    
+
         conv_weight = conv_weight.view(self.n_groups * self.n_groups_luminance * self.out_channels, self.n_groups * self.n_groups_luminance * self.in_channels, self.kernel_size, self.kernel_size)
         out_tensors = F.conv2d(x, conv_weight, stride=self.stride, padding=self.padding)
         return out_tensors
+
+    def forward_3(self,x):
+        conv_weight = torch.zeros((self.n_groups, self.n_groups_luminance, self.out_channels, self.n_groups, self.n_groups_luminance, self.in_channels, self.kernel_size, self.kernel_size), dtype=self.conv_weight.dtype)
+        # put on same device as x
+        conv_weight = conv_weight.to(x.device)
+        cw = self.conv_weight.view(self.out_channels, self.n_groups, self.n_groups_luminance, self.in_channels, self.kernel_size, self.kernel_size)
+        for i in range(self.n_groups):
+            for j in range(self.n_groups_luminance):
+                for k in range(self.n_groups):
+                    for l in range(self.n_groups_luminance):
+                        if self.mask[i,j,k,l, 0] != -1:
+                            conv_weight[i, j, :, k, l, :, :, :] = cw[:, self.mask[i,j,k,l, 0], self.mask[i,j,k,l, 1], :, :, :] / self.sfs[i,j]
+
+
+                # the mask has four dimensions and is boolean
+                    # we want to assign the values of conv_weight[a, b, :, c, d, :, :, :] to cw[:, i, j, :,:,:]
+                    # where mask[a, b, c, d] is True
+                # we can do this by reshaping conv_weight to have shape (n_groups * n_groups_luminance, out_channels, n_groups * n_groups_luminance, in_channels, kernel_size, kernel_size)
+                # and then reshaping cw to have shape (out_channels, n_groups * n_groups_luminance, in_channels, kernel_size, kernel_size)
+                    
+
+        conv_weight = conv_weight.view(self.n_groups * self.n_groups_luminance * self.out_channels, self.n_groups * self.n_groups_luminance * self.in_channels, self.kernel_size, self.kernel_size)
+        out_tensors = F.conv2d(x, conv_weight, stride=self.stride, padding=self.padding)
+        return out_tensors
+
     
     def forward(self, x):
-        out_tensors = self.forward_2(x)
+        # out_tensors = self.forward_2(x)
+        out_tensors = self.forward_3(x)
 
         return out_tensors
 
